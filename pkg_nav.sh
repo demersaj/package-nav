@@ -6,19 +6,62 @@ set -e  # Exit on any error
 # Capture the original directory where the script was run from
 ORIGINAL_DIR="$(pwd)"
 
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load .env file if it exists
+ENV_FILE="$SCRIPT_DIR/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    echo "Loading environment variables from .env file..."
+    # Export variables from .env file, ignoring comments and empty lines
+    # Using set -a to automatically export all variables
+    set -a
+    # Create a temporary file with cleaned content (no comments, no empty lines)
+    TEMP_ENV=$(mktemp)
+    grep -v '^[[:space:]]*#' "$ENV_FILE" | grep -v '^[[:space:]]*$' > "$TEMP_ENV"
+    source "$TEMP_ENV"
+    rm -f "$TEMP_ENV"
+    set +a
+fi
+
 # Configuration
 APP_NAME="Navigator"
 #DMG_URL="https://example.com/path/to/Navigator.dmg"  # Replace with actual URL
-COMPANY_NAME="WebAI, Inc."
-TEAM_ID="N6A9PV4HQ7"
-DEVELOPER_ID_INSTALLER="Developer ID Installer: $COMPANY_NAME ($TEAM_ID)"
-NOTARY_PROFILE="webAI"  # Set your notarytool profile name
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Sensitive configuration from environment variables
+COMPANY_NAME="${COMPANY_NAME:-}"
+TEAM_ID="${TEAM_ID:-}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-}"
+JSON_URL="${JSON_URL:-}"
+
+# Validate required environment variables
+if [[ -z "$COMPANY_NAME" ]]; then
+    echo -e "${RED}Error: COMPANY_NAME environment variable is not set${NC}"
+    exit 1
+fi
+
+if [[ -z "$TEAM_ID" ]]; then
+    echo -e "${RED}Error: TEAM_ID environment variable is not set${NC}"
+    exit 1
+fi
+
+if [[ -z "$NOTARY_PROFILE" ]]; then
+    echo -e "${RED}Error: NOTARY_PROFILE environment variable is not set${NC}"
+    exit 1
+fi
+
+if [[ -z "$JSON_URL" ]]; then
+    echo -e "${RED}Error: JSON_URL environment variable is not set${NC}"
+    exit 1
+fi
+
+DEVELOPER_ID_INSTALLER="Developer ID Installer: $COMPANY_NAME ($TEAM_ID)"
 
 echo -e "${YELLOW}Starting Navigator app update and packaging process...${NC}"
 
@@ -34,9 +77,6 @@ set -e
 echo "Navigator Latest Version Downloader"
 echo "========================================"
 echo ""
-
-# JSON endpoint URL
-JSON_URL="https://downloads.webai.com/navigator/navigator-latest.json"
 
 # Fetch the latest version info
 echo "Fetching latest version info..."

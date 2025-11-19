@@ -1,0 +1,10 @@
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.pkg
+*.dmg
+
