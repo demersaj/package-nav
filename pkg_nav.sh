@@ -87,6 +87,12 @@ VERSION=$(echo "$JSON_DATA" | grep -o '"version": *"[^"]*"' | head -1 | sed 's/"
 DMG_URL=$(echo "$JSON_DATA" | grep -o '"url": *"[^"]*"' | head -1 | sed 's/"url": *"\([^"]*\)"/\1/')
 SHA256=$(echo "$JSON_DATA" | grep -o '"sha256": *"[^"]*"' | head -1 | sed 's/"sha256": *"\([^"]*\)"/\1/')
 
+# Validate that version was extracted
+if [[ -z "$VERSION" ]]; then
+    echo -e "${RED}Error: Failed to extract version from JSON response${NC}"
+    exit 1
+fi
+
 # Extract filename from URL
 FILENAME=$(basename "$DMG_URL")
 
@@ -177,8 +183,12 @@ echo -e "${GREEN}✓ Developer ID Installer certificate found${NC}"
 # Step 5: Create signed package using productbuild
 echo -e "${YELLOW}Step 5: Creating signed package with productbuild...${NC}"
 PKG_PATH="$TEMP_DIR/$APP_NAME.pkg"
-FINAL_PKG_PATH="$ORIGINAL_DIR/$APP_NAME-$(date +%Y%m%d-%H%M%S).pkg"
 
+# Sanitize version string for use in filename (replace spaces, special chars with hyphens)
+SANITIZED_VERSION=$(echo "$VERSION" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
+FINAL_PKG_PATH="$ORIGINAL_DIR/$APP_NAME-${SANITIZED_VERSION}.pkg"
+
+echo -e "${GREEN}Package will be named: $(basename "$FINAL_PKG_PATH")${NC}"
 echo "Creating package with command:"
 echo "productbuild --component \"$APP_PATH\" /Applications --sign \"$DEVELOPER_ID_INSTALLER\" \"$PKG_PATH\""
 

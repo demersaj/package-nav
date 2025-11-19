@@ -50,14 +50,14 @@ The status is continually outputted at each step along with any errors or failur
 
 ## Output
 
-The script will create a timestamped package file in the directory where it was run, for example:
-- `Navigator-20251001-115446.pkg`
+The script will create a versioned package file in the directory where it was run, for example:
+- `Navigator-2.345.6.pkg`
 
 ## Installation
 
 To install the created package:
 ```bash
-sudo installer -pkg "Navigator-YYYYMMDD-HHMMSS.pkg" -target /Applications
+sudo installer -pkg "Navigator-x.xxx.x.pkg" -target /Applications
 ```
 
 ## Troubleshooting
