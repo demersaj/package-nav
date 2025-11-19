@@ -1,6 +1,6 @@
 # Navigator Package Creation Script
 
-This script automates the process of downloading, packaging, signing, and notarizing the Navigator application for macOS distribution.
+This script automates the process of downloading, packaging, signing, and notarizing the Navigator application for macOS distribution. It *should* be generic enough to adapt to other programs as well.
 
 ## Prerequisites
 
