@@ -8,3 +8,9 @@
 *.pkg
 *.dmg
 
+# Watcher files
+.last_version
+watch.log
+watch_stdout.log
+watch_stderr.log
+
