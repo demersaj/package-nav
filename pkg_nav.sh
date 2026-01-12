@@ -310,3 +310,7 @@ pkgutil --check-signature "$FINAL_PKG_PATH"
 # Create installation command example
 echo -e "\n${YELLOW}Installation command:${NC}"
 echo "sudo installer -pkg \"$FINAL_PKG_PATH\" -target /Applications"
+
+# Step 12:Clean up old Navigator files
+echo -e "\n${YELLOW}Step 11: Cleaning up old Navigator files...${NC}"
+./cleanup_old_versions.sh

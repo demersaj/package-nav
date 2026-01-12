@@ -95,6 +95,12 @@ if [[ -f "$SCRIPT_DIR/pkg_nav.sh" ]]; then
     
     if [[ $EXIT_CODE -eq 0 ]]; then
         log "${GREEN}✓ Package creation completed successfully for version $VERSION${NC}"
+        
+        # Clean up old versions
+        if [[ -f "$SCRIPT_DIR/cleanup_old_versions.sh" ]]; then
+            log "${BLUE}Cleaning up old Navigator versions...${NC}"
+            bash "$SCRIPT_DIR/cleanup_old_versions.sh" >> "$LOG_FILE" 2>&1
+        fi
     else
         log "${RED}✗ Package creation failed for version $VERSION (exit code: $EXIT_CODE)${NC}"
         exit $EXIT_CODE
