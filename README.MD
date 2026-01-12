@@ -33,6 +33,7 @@ This script takes the newest production version of Navigator into a temp folder.
 7. **Staples** the notarization ticket to the package
 8. **Validates** the notarization
 9. **Moves** the final package to the original directory with a timestamp
+10. **Deletes** old Navigator .pkg and .dmg files
 
 The status is continually outputted at each step along with any errors or failure steps.
 
