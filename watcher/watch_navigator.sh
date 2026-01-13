@@ -5,11 +5,13 @@
 
 set -e
 
-# Get the directory where the script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the directory where the script is located (watcher folder)
+WATCHER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the parent directory (package-nav root)
+SCRIPT_DIR="$(cd "$WATCHER_DIR/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-# Load .env file if it exists
+# Load .env file if it exists (in parent directory)
 ENV_FILE="$SCRIPT_DIR/.env"
 if [[ -f "$ENV_FILE" ]]; then
     set -a
@@ -27,9 +29,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Version tracking file
+# Version tracking file (in parent directory)
 VERSION_FILE="$SCRIPT_DIR/.last_version"
-LOG_FILE="$SCRIPT_DIR/watch.log"
+LOG_FILE="$WATCHER_DIR/watch.log"
 
 # Logging function
 log() {
@@ -52,8 +54,8 @@ if [[ -z "$JSON_DATA" ]]; then
     exit 1
 fi
 
-# Parse JSON to get version
-VERSION=$(echo "$JSON_DATA" | grep -o '"version": *"[^"]*"' | head -1 | sed 's/"version": *"\([^"]*\)"/\1/')
+# Parse JSON to get version (extract from "latest" object to avoid matching dependency versions)
+VERSION=$(echo "$JSON_DATA" | grep -A 10 '"latest"' | grep -o '"version": *"[^"]*"' | head -1 | sed 's/"version": *"\([^"]*\)"/\1/')
 
 if [[ -z "$VERSION" ]]; then
     log "${RED}Error: Failed to parse version from JSON${NC}"
@@ -87,7 +89,7 @@ echo "$VERSION" > "$VERSION_FILE"
 # Run the packaging script
 log "${GREEN}Starting package creation for version $VERSION...${NC}"
 
-# Change to script directory and run pkg_nav.sh
+# Change to parent directory and run pkg_nav.sh
 cd "$SCRIPT_DIR"
 if [[ -f "$SCRIPT_DIR/pkg_nav.sh" ]]; then
     bash "$SCRIPT_DIR/pkg_nav.sh" 2>&1 | tee -a "$LOG_FILE"
@@ -96,7 +98,7 @@ if [[ -f "$SCRIPT_DIR/pkg_nav.sh" ]]; then
     if [[ $EXIT_CODE -eq 0 ]]; then
         log "${GREEN}✓ Package creation completed successfully for version $VERSION${NC}"
         
-        # Clean up old versions
+        # Clean up old versions (cleanup script is in parent directory)
         if [[ -f "$SCRIPT_DIR/cleanup_old_versions.sh" ]]; then
             log "${BLUE}Cleaning up old Navigator versions...${NC}"
             bash "$SCRIPT_DIR/cleanup_old_versions.sh" >> "$LOG_FILE" 2>&1

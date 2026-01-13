@@ -61,6 +61,11 @@ if [[ -z "$JSON_URL" ]]; then
     exit 1
 fi
 
+# Optional S3 upload configuration
+S3_BUCKET="${S3_BUCKET:-}"
+S3_PREFIX="${S3_PREFIX:-navigator/}"  # Default prefix/path in bucket
+S3_REGION="${S3_REGION:-us-east-1}"   # Default AWS region
+
 DEVELOPER_ID_INSTALLER="Developer ID Installer: $COMPANY_NAME ($TEAM_ID)"
 
 echo -e "${YELLOW}Starting Navigator app update and packaging process...${NC}"
@@ -311,6 +316,48 @@ pkgutil --check-signature "$FINAL_PKG_PATH"
 echo -e "\n${YELLOW}Installation command:${NC}"
 echo "sudo installer -pkg \"$FINAL_PKG_PATH\" -target /Applications"
 
-# Step 12:Clean up old Navigator files
-echo -e "\n${YELLOW}Step 11: Cleaning up old Navigator files...${NC}"
-./cleanup_old_versions.sh
+# Step 12: Upload to S3 (if configured)
+if [[ -n "$S3_BUCKET" ]]; then
+    echo -e "\n${YELLOW}Step 12: Uploading package to S3...${NC}"
+    
+    # Check if AWS CLI is installed
+    if ! command -v aws &> /dev/null; then
+        echo -e "${RED}Error: AWS CLI is not installed. Install it with: brew install awscli${NC}"
+        echo -e "${YELLOW}Skipping S3 upload...${NC}"
+    else
+        # Construct S3 path
+        PKG_FILENAME=$(basename "$FINAL_PKG_PATH")
+        S3_PATH="s3://${S3_BUCKET}/${S3_PREFIX}${PKG_FILENAME}"
+        
+        echo "Uploading to: $S3_PATH"
+        
+        # Upload with metadata
+        if aws s3 cp "$FINAL_PKG_PATH" "$S3_PATH" \
+            --region "$S3_REGION" \
+            --metadata "version=$VERSION,sha256=$SHA256" \
+            --content-type "application/x-install-package-archive" \
+            --acl "${S3_ACL:-private}"; then
+            echo -e "${GREEN}✓ Package uploaded to S3 successfully${NC}"
+            echo -e "${GREEN}S3 URL: $S3_PATH${NC}"
+            
+            # Generate public URL if bucket is public
+            if [[ "${S3_ACL:-private}" == "public-read" ]]; then
+                S3_PUBLIC_URL="https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${S3_PREFIX}${PKG_FILENAME}"
+                echo -e "${GREEN}Public URL: $S3_PUBLIC_URL${NC}"
+            fi
+        else
+            echo -e "${RED}Error: Failed to upload package to S3${NC}"
+            echo -e "${YELLOW}Continuing without S3 upload...${NC}"
+        fi
+    fi
+else
+    echo -e "\n${YELLOW}S3 upload skipped (S3_BUCKET not set)${NC}"
+fi
+
+# Step 13: Clean up old Navigator files
+echo -e "\n${YELLOW}Step 13: Cleaning up old Navigator files...${NC}"
+if [[ -f "$SCRIPT_DIR/cleanup_old_versions.sh" ]]; then
+    bash "$SCRIPT_DIR/cleanup_old_versions.sh"
+else
+    echo -e "${YELLOW}Cleanup script not found, skipping...${NC}"
+fi

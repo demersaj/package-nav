@@ -32,7 +32,9 @@ case "${1:-}" in
         
         # Update paths in plist to match current directory and copy to destination
         echo -e "${YELLOW}Creating plist with updated paths...${NC}"
-        sed "s|/Users/huxley-47/dev/package-nav|$SCRIPT_DIR|g" "$PLIST_SOURCE" > "$PLIST_DEST"
+        # Replace the hardcoded path with the parent directory (package-nav root)
+        PARENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+        sed "s|/Users/huxley-47/dev/package-nav|$PARENT_DIR|g" "$PLIST_SOURCE" > "$PLIST_DEST"
         
         # Load the service
         echo -e "${YELLOW}Loading launchd service...${NC}"
@@ -42,6 +44,7 @@ case "${1:-}" in
         echo -e "${GREEN}The watcher will check for new versions every hour.${NC}"
         echo -e "${YELLOW}To check status: launchctl list | grep navigator${NC}"
         echo -e "${YELLOW}To view logs: tail -f $SCRIPT_DIR/watch.log${NC}"
+        echo -e "${YELLOW}Note: Logs are stored in the watcher directory${NC}"
         ;;
         
     uninstall)
@@ -71,8 +74,10 @@ case "${1:-}" in
             echo -e "${RED}✗ Watcher is not running${NC}"
         fi
         
-        if [[ -f "$SCRIPT_DIR/.last_version" ]]; then
-            LAST_VERSION=$(cat "$SCRIPT_DIR/.last_version")
+        # Check .last_version in parent directory
+        PARENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+        if [[ -f "$PARENT_DIR/.last_version" ]]; then
+            LAST_VERSION=$(cat "$PARENT_DIR/.last_version")
             echo -e "${BLUE}Last processed version: $LAST_VERSION${NC}"
         else
             echo -e "${YELLOW}No version has been processed yet${NC}"

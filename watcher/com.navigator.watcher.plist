@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/huxley-47/dev/package-nav/watch_navigator.sh</string>
+        <string>/Users/huxley-47/dev/package-nav/watcher/watch_navigator.sh</string>
     </array>
     
     <key>WorkingDirectory</key>
@@ -21,10 +21,10 @@
     <true/>
     
     <key>StandardOutPath</key>
-    <string>/Users/huxley-47/dev/package-nav/watch_stdout.log</string>
+    <string>/Users/huxley-47/dev/package-nav/watcher/watch_stdout.log</string>
     
     <key>StandardErrorPath</key>
-    <string>/Users/huxley-47/dev/package-nav/watch_stderr.log</string>
+    <string>/Users/huxley-47/dev/package-nav/watcher/watch_stderr.log</string>
     
     <key>EnvironmentVariables</key>
     <dict>

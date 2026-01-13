@@ -33,7 +33,8 @@ This script takes the newest production version of Navigator into a temp folder.
 7. **Staples** the notarization ticket to the package
 8. **Validates** the notarization
 9. **Moves** the final package to the original directory with a timestamp
-10. **Deletes** old Navigator .pkg and .dmg files
+10. **Uploads** the complete .pkg file to an S3 bucket you configured (requires setup).
+11. **Deletes** old Navigator .pkg and .dmg files
 
 The status is continually outputted at each step along with any errors or failure steps.
 
@@ -75,6 +76,73 @@ If notarization validation fails, the script now provides detailed debugging inf
 - Package signature verification
 - Alternative validation methods
 - Exit codes and error messages
+- Logs stderr, stdout, and watcher behavior for review
+
+## S3 Upload (Optional)
+
+The script can automatically upload completed packages to an S3 bucket for distribution. This is completely optional and only runs if configured.
+
+### Prerequisites
+
+1. **Install AWS CLI**:
+   ```bash
+   brew install awscli
+   ```
+
+2. **Configure AWS Credentials**:
+   ```bash
+   aws configure
+   ```
+   
+   Or set environment variables:
+   ```bash
+   export AWS_ACCESS_KEY_ID="your-access-key"
+   export AWS_SECRET_ACCESS_KEY="your-secret-key"
+   ```
+
+### Configuration
+
+Add the following variables to your `.env` file:
+
+```bash
+# S3 Upload Configuration (optional)
+S3_BUCKET="your-bucket-name"           # Required if you want S3 upload
+S3_PREFIX="navigator/"                 # Optional: path prefix in bucket (default: "navigator/")
+S3_REGION="us-east-1"                  # Optional: AWS region (default: "us-east-1")
+S3_ACL="private"                       # Optional: "private" or "public-read" (default: "private")
+```
+
+### How It Works
+
+- After successful package creation, the script checks if `S3_BUCKET` is set
+- If configured, it uploads the PKG file to: `s3://your-bucket/navigator/Navigator-2.423.0.pkg`
+- Includes metadata: version and SHA256 hash
+- Sets appropriate content type for macOS packages
+- Shows the S3 URL after successful upload
+
+### Example Configuration
+
+```bash
+# Private uploads (default)
+S3_BUCKET="my-navigator-releases"
+S3_PREFIX="packages/"
+S3_REGION="us-west-2"
+# S3_ACL not set = defaults to "private"
+
+# Public downloads
+S3_BUCKET="my-navigator-releases"
+S3_PREFIX="packages/"
+S3_REGION="us-west-2"
+S3_ACL="public-read"  # Allows public access
+```
+
+### Notes
+
+- If `S3_BUCKET` is not set, S3 upload is skipped
+- If AWS CLI is not installed, the script will show an error and continue without uploading
+- Upload failures don't stop the script - it will continue even if S3 upload fails
+- For private uploads, only users with AWS credentials can access the files
+- For public uploads (`S3_ACL="public-read"`), the script will display a public URL
 
 ## Requirements
 
@@ -82,3 +150,4 @@ If notarization validation fails, the script now provides detailed debugging inf
 - Valid Apple Developer account
 - Developer ID certificates
 - Notarytool profile configured
+- AWS CLI (optional, only if using S3 upload)
